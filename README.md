@@ -8,6 +8,7 @@ Clone the repository and install the required packages:
 
 ```bash
 pip install -r requirements.txt
+chmod u+x run.sh
 ```
 
 ### Configuration
