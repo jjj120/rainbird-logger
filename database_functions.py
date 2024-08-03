@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3, os
 from rainbird_data import RainbirdData
 
 
@@ -6,7 +6,8 @@ def create_sqlite_database(filename):
     """create a database connection to the SQLite database"""
     conn = None
     try:
-        conn = sqlite3.connect(filename, detect_types=sqlite3.PARSE_DECLTYPES)
+        filepath = os.path.join(os.getcwd(), filename)
+        conn = sqlite3.connect(filepath, detect_types=sqlite3.PARSE_DECLTYPES)
         # Add entry to the database
         c = conn.cursor()
         c.execute(
@@ -36,7 +37,8 @@ def create_sqlite_database(filename):
 def add_data(filename: str, data: RainbirdData) -> None:
     conn = None
     try:
-        conn = sqlite3.connect(filename, detect_types=sqlite3.PARSE_DECLTYPES)
+        filepath = os.path.join(os.getcwd(), filename)
+        conn = sqlite3.connect(filepath, detect_types=sqlite3.PARSE_DECLTYPES)
         c = conn.cursor()
         c.execute(
             """
