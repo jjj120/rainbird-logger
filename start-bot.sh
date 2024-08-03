@@ -4,4 +4,4 @@
 source ./.venv/bin/activate
 
 # Run the main.py script
-python ./main.py
+python ./telegram_notification_bot.py
