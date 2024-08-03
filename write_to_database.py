@@ -1,15 +1,32 @@
 import asyncio, aiohttp, os
 from dotenv import load_dotenv
 from pyrainbird import async_client
-from rainbird_data import RainbirdData
+from rainbird_data import RainbirdData, get_rainbird_data
 
 from database_functions import create_sqlite_database, add_data
+from telegram_notification import send_notification
 
 load_dotenv()
 
 RAINBIRD_PASSWORD = os.getenv("RAINBIRD_PASSWORD")
 RAINBIRD_IP = os.getenv("RAINBIRD_IP_ADDRESS")
 DATABASE_PATH = os.getenv("DATABASE_PATH")
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+TELEGRAM_NOTIFICATION_TEXT = os.getenv("TELEGRAM_NOTIFICATION_TEXT")
+TELEGRAM_NOTIFICATION_TIME_HOUR = os.getenv("TELEGRAM_NOTIFICATION_TIME_HOUR")
+TELEGRAM_NOTIFICATION_TIME_MINUTE = os.getenv("TELEGRAM_NOTIFICATION_TIME_MINUTE")
+
+telegram_available = not (
+    TELEGRAM_BOT_TOKEN is None
+    or TELEGRAM_CHAT_ID is None
+    or TELEGRAM_NOTIFICATION_TEXT is None
+    or TELEGRAM_NOTIFICATION_TIME_HOUR is None
+    or TELEGRAM_NOTIFICATION_TIME_MINUTE is None
+)
+
 
 # print(
 #     "Logging in at",
@@ -24,28 +41,6 @@ if not os.path.exists(DATABASE_PATH):
     create_sqlite_database(DATABASE_PATH)
 
 
-async def get_rainbird_data(
-    controller: async_client.AsyncRainbirdController,
-) -> RainbirdData:
-    date = await controller.get_current_date()
-    time = await controller.get_current_time()
-
-    zones = await controller.get_available_stations()
-    states = await controller.get_zone_states()
-    zones_running = [states.active(zone) for zone in zones.active_set]
-
-    rain_sensor_state = await controller.get_rain_sensor_state()
-
-    data = RainbirdData(
-        date=str(date),
-        time=str(time),
-        zones_running=zones_running,
-        rain_sensor=rain_sensor_state,
-    )
-
-    return data
-
-
 async def save_data() -> None:
     async with aiohttp.ClientSession() as session:
         controller: async_client.AsyncRainbirdController = (
@@ -54,6 +49,21 @@ async def save_data() -> None:
 
         new_data = await get_rainbird_data(controller)
         add_data(DATABASE_PATH, new_data)
+
+        if (
+            telegram_available == True
+            and new_data.datetime.minute == int(TELEGRAM_NOTIFICATION_TIME_MINUTE)
+            and new_data.datetime.hour == int(TELEGRAM_NOTIFICATION_TIME_HOUR)
+            and new_data.rain_sensor == True
+        ):
+            # print(
+            #     "Regensensor deaktiviert:",
+            #     new_data.datetime.hour,
+            #     new_data.datetime.minute,
+            # )
+            send_notification(
+                TELEGRAM_NOTIFICATION_TEXT, TELEGRAM_CHAT_ID, TELEGRAM_BOT_TOKEN
+            )
 
 
 async def main() -> None:
