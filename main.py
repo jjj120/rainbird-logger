@@ -187,13 +187,13 @@ async def send_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         day_offset = int(day_offset)
 
         render_history_data_day(
-            get_data_from_day("rainbird.sqlite3", day_offset),
+            get_data_from_day(DATABASE_PATH, day_offset),
             "tmp/img_today.png",
             day_offset,
         )
     elif command == "yesterday":
         render_history_data_day(
-            get_data_from_day("rainbird.sqlite3", day_offset=-1),
+            get_data_from_day(DATABASE_PATH, day_offset=-1),
             "tmp/img_yesterday.png",
             -1,
         )
@@ -206,7 +206,7 @@ async def send_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         month_offset = int(month_offset)
 
         render_history_data_month(
-            get_data_from_month("rainbird.sqlite3", month_offset),
+            get_data_from_month(DATABASE_PATH, month_offset),
             "tmp/img_month.png",
             month_offset,
         )
