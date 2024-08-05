@@ -209,9 +209,3 @@ if __name__ == "__main__":
     render_history_data_month(
         database_functions.get_data_from_month("rainbird.sqlite3"), "tmp/img_month.png"
     )
-
-    render_history_data_month(
-        database_functions.get_data_from_month("rainbird.sqlite3", -1),
-        "tmp/img_last_month.png",
-        -1,
-    )
