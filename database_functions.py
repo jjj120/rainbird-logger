@@ -37,34 +37,33 @@ def create_sqlite_database(filename):
 def add_data(filename: str, data: RainbirdData) -> None:
     conn = None
     try:
-        if any(data.zones) or data.rain_sensor:
-            filepath = os.path.join(os.getcwd(), filename)
-            conn = sqlite3.connect(filepath, detect_types=sqlite3.PARSE_DECLTYPES)
-            c = conn.cursor()
-            c.execute(
-                """
-                INSERT INTO rainbird_data (
-                    datetime,
-                    zone_1,
-                    zone_2,
-                    zone_3,
-                    zone_4,
-                    zone_5,
-                    zone_6,
-                    zone_7,
-                    zone_8,
-                    rain_sensor
-                ) VALUES (
-                """
-                + ", ".join("?" * 10)
-                + ")",
-                (
-                    data.datetime,
-                    *data.zones,
-                    data.rain_sensor,
-                ),
-            )
-            conn.commit()
+        filepath = os.path.join(os.getcwd(), filename)
+        conn = sqlite3.connect(filepath, detect_types=sqlite3.PARSE_DECLTYPES)
+        c = conn.cursor()
+        c.execute(
+            """
+            INSERT INTO rainbird_data (
+                datetime,
+                zone_1,
+                zone_2,
+                zone_3,
+                zone_4,
+                zone_5,
+                zone_6,
+                zone_7,
+                zone_8,
+                rain_sensor
+            ) VALUES (
+            """
+            + ", ".join("?" * 10)
+            + ")",
+            (
+                data.datetime,
+                *data.zones,
+                data.rain_sensor,
+            ),
+        )
+        conn.commit()
 
     except sqlite3.Error as e:
         print("sqlite3:", e)

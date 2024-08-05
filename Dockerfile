@@ -3,6 +3,7 @@ FROM python:3.12-slim
 
 # Copy the Python script and the requirements file into the container
 COPY . /app
+RUN rm -rf /app/data
 
 # Set the working directory in the container
 WORKDIR /app
