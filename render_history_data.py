@@ -16,7 +16,7 @@ COLORS = [
 ]
 COLOR_RAIN_SENSOR = "darkgrey"
 ZONE_ALIAS = {
-    1: "Glashaus",
+    2: "Glashaus",
 }
 
 
@@ -47,11 +47,11 @@ def render_history_data_day(
     for index, zone in enumerate(zones):
         if index >= ACTIVE_ZONES:
             break
-        if index in ZONE_ALIAS.keys():
+        if index + 1 in ZONE_ALIAS.keys():
             axs[0].plot(
                 times,
                 zone,
-                label=f"Zone {index+1} - {ZONE_ALIAS[index]}",
+                label=f"Zone {index+1} - {ZONE_ALIAS[index+1]}",
                 color=COLORS[index],
             )
         else:
@@ -87,13 +87,17 @@ def render_history_data_month(
 
     fig, axs = plt.subplots(2)
 
+    if len(history_data_month) < 1:
+        print("No data available for this month.")
+        return
+
     month = (history_data_month[0].datetime.month + month_offset) % 12
     year = (
         history_data_month[0].datetime.year
         + (history_data_month[0].datetime.month + month_offset) // 12
     )
 
-    fig.suptitle(_int_to_month(month) + " " + str(year), fontsize=20)
+    fig.suptitle(int_to_month(month) + " " + str(year), fontsize=20)
 
     zones = {}
     rain_sensor = {}
@@ -118,22 +122,23 @@ def render_history_data_month(
     for index, zone in enumerate(zones):
         if index >= ACTIVE_ZONES:
             break
-        if index in ZONE_ALIAS.keys():
-            axs[0].plot(
-                times,
-                zone,
-                label=f"Zone {index+1} - {ZONE_ALIAS[index]}",
-                color=COLORS[index],
-            )
-        else:
-            axs[0].plot(times, zone, label=f"Zone {index+1}", color=COLORS[index])
 
         # shift time to avoid overlapping of dots
         times_shifted = [
             datetime.datetime(time.year, time.month, time.day, index, 0, 0)
             for time in times
         ]
-        axs[0].scatter(times_shifted, zone, label=f"Zone {index}", color=COLORS[index])
+        if index + 1 in ZONE_ALIAS.keys():
+            axs[0].scatter(
+                times_shifted,
+                zone,
+                label=f"Zone {index+1} - {ZONE_ALIAS[index+1]}",
+                color=COLORS[index],
+            )
+        else:
+            axs[0].scatter(
+                times_shifted, zone, label=f"Zone {index+1}", color=COLORS[index]
+            )
 
     axs[0].legend(loc="upper right")
 
@@ -157,7 +162,7 @@ def render_history_data_month(
     plt.savefig(filename, dpi=300)
 
 
-def _int_to_month(month: int) -> str:
+def int_to_month(month: int) -> str:
     """Convert month number to month name."""
     months = [
         "Jänner",

@@ -95,11 +95,15 @@ def get_data_from_day(filename: str, day_offset: int = 0) -> list[RainbirdData]:
             (f"{day_offset} day",),
         )
         data = c.fetchall()
+        if len(data) == 0:
+            print("No data available for this day.")
+
     except sqlite3.Error as e:
         print("sqlite3:", e)
     finally:
         if conn:
             conn.close()
+
     return [line_to_rainbird_data(line) for line in data]
 
 
@@ -117,11 +121,15 @@ def get_data_from_month(filename: str, month_offset: int = 0) -> list[RainbirdDa
             (f"{month_offset} month",),
         )
         data = c.fetchall()
+        if len(data) == 0:
+            print("No data available for this day.")
+
     except sqlite3.Error as e:
         print("sqlite3:", e)
     finally:
         if conn:
             conn.close()
+
     return [line_to_rainbird_data(line) for line in data]
 
 
