@@ -50,21 +50,6 @@ async def save_data() -> None:
         new_data = await get_rainbird_data(controller)
         add_data(DATABASE_PATH, new_data)
 
-        if (
-            telegram_available == True
-            and new_data.datetime.minute == int(TELEGRAM_NOTIFICATION_TIME_MINUTE)
-            and new_data.datetime.hour == int(TELEGRAM_NOTIFICATION_TIME_HOUR)
-            and new_data.rain_sensor == True
-        ):
-            # print(
-            #     "Regensensor deaktiviert:",
-            #     new_data.datetime.hour,
-            #     new_data.datetime.minute,
-            # )
-            send_notification(
-                TELEGRAM_NOTIFICATION_TEXT, TELEGRAM_CHAT_ID, TELEGRAM_BOT_TOKEN
-            )
-
 
 async def main() -> None:
     await save_data()
