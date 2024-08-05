@@ -31,7 +31,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
-logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,12 @@ def check_int(s):
 # Define command handlers. These usually take the two arguments update and context.
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Ping the bot."""
+    logger.warning(
+        "Ping command issued from chat: "
+        + str(update.message.chat_id)
+        + " from username: "
+        + str(update.message.from_user.username)
+    )
     await update.message.reply_text("Pong")
 
 
@@ -115,9 +121,9 @@ async def irrigation_current_string() -> str:
 
         for index, zone in enumerate(rainbird_data.zones):
             if zone:
-                message += f"Zone {index} läuft\n"
+                message += f"Zone {index+1} läuft\n"
             else:
-                message += f"Zone {index} läuft nicht\n"
+                message += f"Zone {index+1} läuft nicht\n"
 
         return message
 
@@ -142,9 +148,9 @@ async def irrigation_today_string() -> str:
     message = ""
     for index, zone in enumerate(zones_today):
         if zone:
-            message += f"Zone {index} lief heute schon\n"
+            message += f"Zone {index+1} lief heute schon\n"
         else:
-            message += f"Zone {index} lief heute nicht\n"
+            message += f"Zone {index+1} lief heute nicht\n"
 
     return message
 
