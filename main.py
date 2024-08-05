@@ -88,12 +88,13 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 /today - Check if irrigation was running today
 
 /history
-    day - Show a graph of the days irrigation history
+    day <opt:offset> - Show a graph of the days irrigation history
     yesterday - Show a graph of yesterdays irrigation history
-    month - Show a graph of the months irrigation history
+    month <opt:offset> - Show a graph of the months irrigation history
 
 You also get a notification if the rain sensor is deactivates irrigation at the specified time.
     """
+    logger.debug("Help command issued")
     await update.message.reply_text(HELP_STRING)
 
 
@@ -101,6 +102,7 @@ async def check_irrigation_current(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
     """Check if irrigation is running."""
+    logger.debug("Checking current irrigation status")
     async with aiohttp.ClientSession() as session:
         controller: async_client.AsyncRainbirdController = (
             async_client.CreateController(session, RAINBIRD_IP, RAINBIRD_PASSWORD)
@@ -126,6 +128,7 @@ async def check_irrigation_today(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
     """Check if irrigation was running today."""
+    logger.debug("Checking irrigation status for today")
     data_parsed = get_data_from_day(DATABASE_PATH)
 
     zones_today: list[bool] = [False] * 8
@@ -146,6 +149,7 @@ async def check_irrigation_today(
 
 async def rain_sensor_notification(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Check if irrigation is running."""
+    logger.debug("Checking current irrigation status")
     async with aiohttp.ClientSession() as session:
         controller: async_client.AsyncRainbirdController = (
             async_client.CreateController(session, RAINBIRD_IP, RAINBIRD_PASSWORD)
@@ -159,6 +163,7 @@ async def rain_sensor_notification(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def save_data_to_db() -> None:
+    logger.debug("Saving data to database")
     async with aiohttp.ClientSession() as session:
         controller: async_client.AsyncRainbirdController = (
             async_client.CreateController(session, RAINBIRD_IP, RAINBIRD_PASSWORD)
@@ -170,13 +175,14 @@ async def save_data_to_db() -> None:
 
 async def send_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send an image."""
+    logger.debug("Sending test image")
     await update.message.reply_photo(photo="https://telegram.org/img/t_logo.png")
 
 
 async def send_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send an image of the days history."""
-    # get the command
     command = context.args[0]
+    logger.debug("Sending history image with command: " + command)
 
     if command == "day":
         day_offset = context.args[1] if len(context.args) > 1 else "0"
@@ -253,6 +259,7 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, do_nothing))
 
     # Run the bot until the user presses Ctrl-C
+    logger.info("Starting bot")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
