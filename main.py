@@ -194,13 +194,13 @@ async def send_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         render_history_data_day(
             get_data_from_day(DATABASE_PATH, day_offset),
-            "tmp/img_today.png",
+            "tmp/img.png",
             day_offset,
         )
     elif command == "yesterday":
         render_history_data_day(
             get_data_from_day(DATABASE_PATH, day_offset=-1),
-            "tmp/img_yesterday.png",
+            "tmp/img.png",
             -1,
         )
     elif command == "month":
@@ -213,15 +213,15 @@ async def send_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         render_history_data_month(
             get_data_from_month(DATABASE_PATH, month_offset),
-            "tmp/img_month.png",
+            "tmp/img.png",
             month_offset,
         )
     else:
         await update.message.reply_text(
-            "Invalid command, use /history day|yesterday|month"
+            "Invalid command, use /history day <opt:offset> | yesterday | month <opt:offset>"
         )
         return
-    await update.message.reply_photo(photo="tmp/img_today.png")
+    await update.message.reply_photo(photo="tmp/img.png")
 
 
 def main() -> None:
