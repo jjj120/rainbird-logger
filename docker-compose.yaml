@@ -1,0 +1,10 @@
+services:
+  rainbird-logger:
+    image: rainbird-logger
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rainbird-logger
+    restart: always
+    volumes:
+      - ./data/:/app/data/

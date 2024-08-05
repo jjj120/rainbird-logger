@@ -166,3 +166,4 @@ cython_debug/
 # Database
 *.db
 *.sqlite3
+tmp/
