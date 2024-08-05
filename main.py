@@ -17,8 +17,13 @@ from dotenv import load_dotenv
 import os, sqlite3
 from rainbird_data import get_rainbird_data, RainbirdData
 from pyrainbird import async_client
-from database_functions import create_sqlite_database, add_data, get_data_from_today
-from render_history_data import render_history_data_today, render_history_data_month
+from database_functions import (
+    create_sqlite_database,
+    add_data,
+    get_data_from_day,
+    get_data_from_month,
+)
+from render_history_data import render_history_data_day, render_history_data_month
 
 # Enable logging
 logging.basicConfig(
@@ -56,6 +61,12 @@ if not os.path.exists(DATABASE_PATH):
     create_sqlite_database(DATABASE_PATH)
 
 
+def check_int(s):
+    if s[0] in ("-", "+"):
+        return s[1:].isdigit()
+    return s.isdigit()
+
+
 # Define command handlers. These usually take the two arguments update and context.
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Ping the bot."""
@@ -75,6 +86,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 /ping - Ping the bot (answers with pong)
 /current - Check if irrigation is currently running and get rain sensor info
 /today - Check if irrigation was running today
+
+/history
+    day - Show a graph of the days irrigation history
+    yesterday - Show a graph of yesterdays irrigation history
+    month - Show a graph of the months irrigation history
 
 You also get a notification if the rain sensor is deactivates irrigation at the specified time.
     """
@@ -110,7 +126,7 @@ async def check_irrigation_today(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
     """Check if irrigation was running today."""
-    data_parsed = get_data_from_today(DATABASE_PATH)
+    data_parsed = get_data_from_day(DATABASE_PATH)
 
     zones_today: list[bool] = [False] * 8
     for entry in data_parsed:
@@ -157,22 +173,49 @@ async def send_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_photo(photo="https://telegram.org/img/t_logo.png")
 
 
-async def send_history_day(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def send_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send an image of the days history."""
-    render_history_data_today(
-        get_data_from_today("rainbird.sqlite3"), "tmp/img_today.png"
-    )
+    # get the command
+    command = context.args[0]
+
+    if command == "day":
+        day_offset = context.args[1] if len(context.args) > 1 else "0"
+        if not check_int(day_offset):
+            await update.message.reply_text("Invalid day offset: " + day_offset)
+            return
+
+        day_offset = int(day_offset)
+
+        render_history_data_day(
+            get_data_from_day("rainbird.sqlite3", day_offset),
+            "tmp/img_today.png",
+            day_offset,
+        )
+    elif command == "yesterday":
+        render_history_data_day(
+            get_data_from_day("rainbird.sqlite3", day_offset=-1),
+            "tmp/img_yesterday.png",
+            -1,
+        )
+    elif command == "month":
+        month_offset = context.args[1] if len(context.args) > 1 else "0"
+        if not check_int(month_offset):
+            await update.message.reply_text("Invalid month offset: " + month_offset)
+            return
+
+        month_offset = int(month_offset)
+
+        render_history_data_month(
+            get_data_from_month("rainbird.sqlite3", month_offset),
+            "tmp/img_month.png",
+            month_offset,
+        )
+    else:
+        await update.message.reply_text(
+            "Invalid command, use /history day|yesterday|month"
+        )
+        return
     await update.message.reply_photo(photo="tmp/img_today.png")
-
-
-async def send_history_month(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
-    """Send an image of the months history."""
-    render_history_data_month(
-        get_data_from_today("rainbird.sqlite3"), "tmp/img_month.png"
-    )
-    await update.message.reply_photo(photo="tmp/img_month.png")
 
 
 def main() -> None:
@@ -185,8 +228,7 @@ def main() -> None:
     application.add_handler(CommandHandler("ping", ping))
     application.add_handler(CommandHandler("current", check_irrigation_current))
     application.add_handler(CommandHandler("today", check_irrigation_today))
-    application.add_handler(CommandHandler("day", send_history_day))
-    application.add_handler(CommandHandler("month", send_history_month))
+    application.add_handler(CommandHandler("history", send_history))
 
     # Add daily timer for rain sensor notification
     for chat_id in TELEGRAM_CHAT_IDS.split(","):
@@ -208,7 +250,6 @@ def main() -> None:
         save_data_to_db, float(DATABASE_INTERVAL_MIN) * 60, name="data_save"
     )
 
-    # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, do_nothing))
 
     # Run the bot until the user presses Ctrl-C

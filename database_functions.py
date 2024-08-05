@@ -81,7 +81,7 @@ def line_to_rainbird_data(line: tuple) -> RainbirdData:
     )
 
 
-def get_data_from_today(filename: str) -> list[RainbirdData]:
+def get_data_from_day(filename: str, day_offset: int = 0) -> list[RainbirdData]:
     conn = None
     data = []
     try:
@@ -90,8 +90,9 @@ def get_data_from_today(filename: str) -> list[RainbirdData]:
         c = conn.cursor()
         c.execute(
             """
-            SELECT * FROM rainbird_data WHERE date(datetime) = date('now')
-            """
+            SELECT * FROM rainbird_data WHERE date(datetime) = date('now', ?)
+            """,
+            (f"{day_offset} day",),
         )
         data = c.fetchall()
     except sqlite3.Error as e:
@@ -102,7 +103,7 @@ def get_data_from_today(filename: str) -> list[RainbirdData]:
     return [line_to_rainbird_data(line) for line in data]
 
 
-def get_data_from_month(filename: str) -> list[RainbirdData]:
+def get_data_from_month(filename: str, month_offset: int = 0) -> list[RainbirdData]:
     conn = None
     data = []
     try:
@@ -111,8 +112,9 @@ def get_data_from_month(filename: str) -> list[RainbirdData]:
         c = conn.cursor()
         c.execute(
             """
-            SELECT * FROM rainbird_data WHERE strftime('%m', datetime) = strftime('%m', 'now')
-            """
+            SELECT * FROM rainbird_data WHERE strftime('%m', datetime) = strftime('%m', 'now', ?)
+            """,
+            (f"{month_offset} month",),
         )
         data = c.fetchall()
     except sqlite3.Error as e:
