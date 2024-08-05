@@ -61,6 +61,21 @@ telegram_available = not (
     or TELEGRAM_NOTIFICATION_TIME_HOUR is None
     or TELEGRAM_NOTIFICATION_TIME_MINUTE is None
 )
+HELP_STRING = """
+/start - Get a list of options
+/help - Show this help
+/ping - Ping the bot (answers with pong)
+/current - Check if irrigation is currently running and get rain sensor info
+/today - Check if irrigation was running today
+
+/history
+    day <opt:offset> - Show a graph of the days irrigation history
+    yesterday - Show a graph of yesterdays irrigation history
+    month <opt:offset> - Show a graph of the months irrigation history
+
+You also get a notification if the rain sensor is deactivates irrigation at the specified time.
+"""
+
 
 if not os.path.exists(DATABASE_PATH):
     create_sqlite_database(DATABASE_PATH)
@@ -85,20 +100,6 @@ async def do_nothing(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    HELP_STRING = """
-/start - Start the bot
-/help - Show this help
-/ping - Ping the bot (answers with pong)
-/current - Check if irrigation is currently running and get rain sensor info
-/today - Check if irrigation was running today
-
-/history
-    day <opt:offset> - Show a graph of the days irrigation history
-    yesterday - Show a graph of yesterdays irrigation history
-    month <opt:offset> - Show a graph of the months irrigation history
-
-You also get a notification if the rain sensor is deactivates irrigation at the specified time.
-    """
     logger.debug("Help command issued")
     await update.message.reply_text(HELP_STRING)
 
@@ -246,6 +247,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             InlineKeyboardButton("Heute", callback_data="today"),
         ],
         [InlineKeyboardButton("Vergangen", callback_data="history")],
+        [InlineKeyboardButton("help", callback_data="help")],
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -299,6 +301,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 InlineKeyboardButton("Aktuell", callback_data="current"),
                 InlineKeyboardButton("Heute", callback_data="today"),
             ],
+            [InlineKeyboardButton("help", callback_data="help")],
             [InlineKeyboardButton("Vergangen", callback_data="history")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -306,6 +309,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             text="Hi! Wähle eine Option:", reply_markup=reply_markup
         )
         return
+
+    elif query.data == "help":
+        await query.edit_message_text(HELP_STRING, reply_markup=back_button_keyboard)
 
     elif query.data == "hist_today":
         render_history_data_day(
