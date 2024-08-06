@@ -30,12 +30,24 @@ from telegram.ext import (
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
-# set higher logging level for httpx to avoid all GET and POST requests being logged
-logging.getLogger("httpx").setLevel(logging.INFO)
+load_dotenv()
+LOGGER_LEVEL = os.getenv("LOGGER_LEVEL")
+
+if LOGGER_LEVEL == "DEBUG":
+    logging.getLogger("httpx").setLevel(logging.DEBUG)
+elif LOGGER_LEVEL == "INFO":
+    logging.getLogger("httpx").setLevel(logging.INFO)
+elif LOGGER_LEVEL == "WARNING" or LOGGER_LEVEL == "WARN":
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+elif LOGGER_LEVEL == "ERROR":
+    logging.getLogger("httpx").setLevel(logging.ERROR)
+elif LOGGER_LEVEL == "CRITICAL":
+    logging.getLogger("httpx").setLevel(logging.CRITICAL)
+else:
+    logging.getLogger("httpx").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 RAINBIRD_PASSWORD = os.getenv("RAINBIRD_PASSWORD")
 RAINBIRD_IP = os.getenv("RAINBIRD_IP_ADDRESS")
