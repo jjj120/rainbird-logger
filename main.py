@@ -3,7 +3,7 @@
 import logging, aiohttp, os, datetime
 from dotenv import load_dotenv
 import os
-from rainbird_data import get_rainbird_data, RainbirdData
+from rainbird_data import get_rainbird_data
 from pyrainbird import async_client
 from database_functions import (
     create_sqlite_database,
@@ -61,6 +61,9 @@ TELEGRAM_CHAT_IDS = os.getenv("TELEGRAM_CHAT_IDS")
 TELEGRAM_NOTIFICATION_TEXT = os.getenv("TELEGRAM_NOTIFICATION_TEXT")
 TELEGRAM_NOTIFICATION_TIME_HOUR = os.getenv("TELEGRAM_NOTIFICATION_TIME_HOUR")
 TELEGRAM_NOTIFICATION_TIME_MINUTE = os.getenv("TELEGRAM_NOTIFICATION_TIME_MINUTE")
+TELEGRAM_NOTIFICATION_TIMEZONE_OFFSET = os.getenv(
+    "TELEGRAM_NOTIFICATION_TIMEZONE_OFFSET"
+)
 
 telegram_available = not (
     TELEGRAM_BOT_TOKEN is None
@@ -394,19 +397,32 @@ def main() -> None:
     application.add_handler(CommandHandler("history", send_history))
 
     # Add daily timer for rain sensor notification
-    for chat_id in TELEGRAM_CHAT_IDS.split(","):
-        current_jobs = application.job_queue.get_jobs_by_name(str(chat_id))
+    for index, chat_id in enumerate(TELEGRAM_CHAT_IDS.split(",")):
+        current_jobs = application.job_queue.get_jobs_by_name(
+            "Rain_sensor_check " + str(chat_id)
+        )
         for job in current_jobs:
             job.schedule_removal()
 
         time = datetime.time(
             hour=int(TELEGRAM_NOTIFICATION_TIME_HOUR),
             minute=int(TELEGRAM_NOTIFICATION_TIME_MINUTE),
+            second=index * 10,  # Add a delay to avoid overwhelming the rainbird
+            tzinfo=datetime.timezone(
+                datetime.timedelta(hours=int(TELEGRAM_NOTIFICATION_TIMEZONE_OFFSET))
+            ),
         )
+
         application.job_queue.run_daily(
-            rain_sensor_notification, time, chat_id=chat_id, name=str(chat_id)
+            rain_sensor_notification,
+            time,
+            chat_id=chat_id,
+            name="Rain_sensor_check " + str(chat_id),
         )
-        logger.info(f"Added weekly timer for chat {chat_id} at {time}")
+
+        logger.info(
+            f"Added weekly timer for chat {chat_id} at {time.hour}:{time.minute}, {time.tzinfo}"
+        )
 
     # Add data saving job
     application.job_queue.run_repeating(
